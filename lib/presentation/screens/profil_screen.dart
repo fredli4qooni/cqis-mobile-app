@@ -38,27 +38,27 @@ class ProfilScreen extends StatelessWidget {
               color: AppColors.white,
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 40,
-                    backgroundColor: AppColors.secondary,
-                    child: Icon(Icons.person, size: 40, color: AppColors.white),
+                    backgroundColor: AppColors.textSecondary.withOpacity(0.2),
+                    child: const Icon(Icons.person_outline, size: 40, color: AppColors.textSecondary),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Budi Santoso', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 20)),
+                        Text('Pengguna Tamu', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 20)),
                         const SizedBox(height: 4),
-                        const Text('budi.petani@email.com', style: TextStyle(color: AppColors.textSecondary)),
+                        const Text('Akses Sementara (Data disimpan lokal)', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.2),
+                            color: AppColors.warning.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: const Text('Petani Kopi', style: TextStyle(color: AppColors.secondary, fontSize: 12, fontWeight: FontWeight.bold)),
+                          child: const Text('Mode Tamu', style: TextStyle(color: AppColors.warning, fontSize: 12, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -67,23 +67,25 @@ class ProfilScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
-            _buildMenuGroup(context, 'Pengaturan Akun', [
-              _buildMenuItem(Icons.edit_outlined, 'Edit Profil', () {}),
-              _buildMenuItem(Icons.lock_outline, 'Ganti Password', () {}),
-            ]),
             
             _buildMenuGroup(context, 'Data & Aplikasi', [
-              _buildMenuItem(Icons.download_outlined, 'Ekspor Semua Riwayat (CSV)', () {}),
-              _buildMenuItem(Icons.info_outline, 'Tentang CQIS', () {}),
-              _buildMenuItem(Icons.help_outline, 'Panduan SNI 01-2907-2008', () {}),
+              _buildMenuItem(Icons.info_outline, 'Tentang CQIS', () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('CQIS - Coffee Quality Inspection System v1.0')),
+                );
+              }),
+              _buildMenuItem(Icons.help_outline, 'Panduan SNI 01-2907-2008', () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Panduan SNI belum tersedia dalam versi Tamu.')),
+                );
+              }),
             ]),
 
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
+                child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pushAndRemoveUntil(
                       context,
@@ -91,11 +93,10 @@ class ProfilScreen extends StatelessWidget {
                       (Route<dynamic> route) => false,
                     );
                   },
-                  icon: const Icon(Icons.logout, color: AppColors.danger),
-                  label: const Text('Keluar Aplikasi', style: TextStyle(color: AppColors.danger)),
-                  style: OutlinedButton.styleFrom(
+                  icon: const Icon(Icons.login),
+                  label: const Text('Daftar / Masuk Akun Penuh'),
+                  style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: AppColors.danger),
                   ),
                 ),
               ),

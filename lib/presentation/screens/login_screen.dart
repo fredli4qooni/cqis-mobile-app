@@ -33,9 +33,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
 
   void _handleLogin() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Fitur Login sedang dalam pengembangan. Silakan Masuk sebagai Tamu.')),
+    );
+  }
+
+  void _handleGuestLogin() async {
     setState(() => _isLoading = true);
     
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
     
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -103,13 +109,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
+                  child: const Text('Masuk', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              SizedBox(
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: _isLoading ? null : _handleGuestLogin,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary),
+                  ),
                   child: _isLoading
                       ? const SizedBox(
                           height: 24,
                           width: 24,
-                          child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
                         )
-                      : const Text('Masuk', style: TextStyle(fontSize: 16)),
+                      : const Text('Masuk sebagai Tamu', style: TextStyle(fontSize: 16, color: AppColors.primary)),
                 ),
               ),
               const SizedBox(height: 24),

@@ -1,25 +1,136 @@
-/*
- * ============================================================================
- * Copyright (c) 2026 Fredli Fourqoni. All rights reserved.
- * 
- * This file is part of CQIS (Coffee Quality Inspection System), which is licensed under the 
- * PolyForm Noncommercial License 1.0.0.
- * 
- * You may not use this file except in compliance with the License.
- * A copy of the License is located in the root directory of this project or at:
- * https://polyformproject.org/licenses/noncommercial/1.0.0
- * 
- * STRICT WARNING: Commercial use, reproduction, and distribution of this 
- * code for business or profit purposes are STRICTLY PROHIBITED.
- * ============================================================================
- */
-
+import 'dart:ui' as _ui;
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
-import 'preview_screen.dart';
+import '../../services/api_service.dart';
+import 'result_screen.dart';
 
-class CameraScreen extends StatelessWidget {
+class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
+
+  @override
+  State<CameraScreen> createState() => _CameraScreenState();
+}
+
+class _CameraScreenState extends State<CameraScreen> {
+  CameraController? _controller;
+  List<CameraDescription>? _cameras;
+  bool _isCameraInitialized = false;
+
+  final ApiService _apiService = ApiService();
+  bool _isProcessingFrame = false;
+  List<DetectionResult> _lastDetections = [];
+  bool _isFlashOn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCameraAndModel();
+  }
+
+  Future<void> _initCameraAndModel() async {
+
+    await _apiService.loadModel();
+
+
+    _cameras = await availableCameras();
+    if (_cameras != null && _cameras!.isNotEmpty) {
+      _controller = CameraController(
+        _cameras![0],
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+
+      await _controller!.initialize();
+
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+        });
+
+
+
+      }
+    }
+  }
+
+  void _toggleFlash() {
+    if (_controller == null) return;
+    setState(() {
+      _isFlashOn = !_isFlashOn;
+    });
+    _controller!.setFlashMode(
+      _isFlashOn ? FlashMode.torch : FlashMode.off,
+    );
+  }
+
+  Future<void> _captureImage() async {
+    if (_controller == null || !_controller!.value.isInitialized) {
+      return;
+    }
+
+    if (_controller!.value.isTakingPicture) {
+      return;
+    }
+
+    try {
+
+      final XFile picture = await _controller!.takePicture();
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultScreen(
+              imagePaths: [picture.path],
+              apiService: _apiService,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil foto: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickImagesFromGallery() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final List<XFile> images = await picker.pickMultiImage();
+
+      if (images.isNotEmpty && mounted) {
+        final List<String> paths = images.map((e) => e.path).toList();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultScreen(
+              imagePaths: paths,
+              apiService: _apiService,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat galeri: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.stopImageStream();
+    _controller?.dispose();
+    _apiService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,100 +139,181 @@ class CameraScreen extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            const Center(
-              child: Icon(Icons.camera_alt, color: Colors.white24, size: 100),
-            ),
+
+            if (_isCameraInitialized && _controller != null)
+              Positioned.fill(
+                child: CameraPreview(_controller!),
+              )
+            else
+              const Center(
+                child: CircularProgressIndicator(color: AppColors.white),
+              ),
+
+
+
 
             Center(
               child: Container(
                 width: MediaQuery.of(context).size.width * 0.8,
                 height: MediaQuery.of(context).size.width * 0.8,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.white, width: 2),
-                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.accent.withOpacity(0.8), width: 2),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accent.withOpacity(0.2),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    )
+                  ],
                 ),
-                child: const Align(
+                child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Letakkan biji kopi di sini', style: TextStyle(color: AppColors.white)),
-                  ),
-                ),
-              ),
-            ),
-
-            Positioned(
-              top: 40,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Text(
-                    'Sebar 20-30 biji, jarak kamera 20-25cm, latar putih',
-                    style: TextStyle(color: AppColors.white, fontSize: 12),
-                  ),
-                ),
-              ),
-            ),
-
-            Positioned(
-              top: 16,
-              left: 16,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: AppColors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.photo_library, color: AppColors.white, size: 30),
-                    onPressed: () {
-                    },
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PreviewScreen()),
-                      );
-                    },
-                    child: Container(
-                      height: 80,
-                      width: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.white, width: 4),
-                      ),
-                      child: Center(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: BackdropFilter(
+                        filter: _ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
-                          height: 64,
-                          width: 64,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          ),
+                          child: const Text(
+                            'Posisikan kopi di dalam area ini',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.flash_off, color: AppColors.white, size: 30),
-                    onPressed: () {
-                    },
+                ),
+              ),
+            ),
+
+
+            Positioned(
+              top: 16,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: BackdropFilter(
+                      filter: _ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.info_outline, color: AppColors.accent, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'Sebar 20-30 biji, jarak ~20cm',
+                              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ],
+                ),
+              ),
+            ),
+
+
+            Positioned(
+              top: 16,
+              left: 16,
+              child: SafeArea(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: _ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: ClipRRect(
+                child: BackdropFilter(
+                  filter: _ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 40, top: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      border: Border(
+                        top: BorderSide(color: Colors.white.withOpacity(0.1)),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.photo_library, color: Colors.white, size: 28),
+                          onPressed: _pickImagesFromGallery,
+                        ),
+                        GestureDetector(
+                          onTap: _captureImage,
+                          child: Container(
+                            height: 76,
+                            width: 76,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.accent, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.accent.withOpacity(0.4),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                )
+                              ]
+                            ),
+                            child: Center(
+                              child: Container(
+                                height: 60,
+                                width: 60,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off, color: _isFlashOn ? AppColors.accent : Colors.white, size: 28),
+                          onPressed: _toggleFlash,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -129,4 +321,5 @@ class CameraScreen extends StatelessWidget {
       ),
     );
   }
+
 }

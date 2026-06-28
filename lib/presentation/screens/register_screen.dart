@@ -33,26 +33,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final List<String> _roles = ['Petani', 'Pengepul', 'Pedagang'];
 
   void _handleRegister() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isLoading = false);
-    
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Registrasi Berhasil'),
-        content: const Text('Cek email untuk verifikasi akun Anda.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('OK', style: TextStyle(color: AppColors.primary)),
-          ),
-        ],
-      ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Fitur Register sedang dalam pengembangan.')),
     );
   }
 

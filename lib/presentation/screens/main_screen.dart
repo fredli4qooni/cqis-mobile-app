@@ -1,15 +1,15 @@
 /*
  * ============================================================================
  * Copyright (c) 2026 Fredli Fourqoni. All rights reserved.
- * 
- * This file is part of CQIS (Coffee Quality Inspection System), which is licensed under the 
+ *
+ * This file is part of CQIS (Coffee Quality Inspection System), which is licensed under the
  * PolyForm Noncommercial License 1.0.0.
- * 
+ *
  * You may not use this file except in compliance with the License.
  * A copy of the License is located in the root directory of this project or at:
  * https://polyformproject.org/licenses/noncommercial/1.0.0
- * 
- * STRICT WARNING: Commercial use, reproduction, and distribution of this 
+ *
+ * STRICT WARNING: Commercial use, reproduction, and distribution of this
  * code for business or profit purposes are STRICTLY PROHIBITED.
  * ============================================================================
  */
@@ -17,7 +17,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import 'home_screen.dart';
-// import 'camera_screen.dart';
+
 import 'pre_condition_screen.dart';
 import 'riwayat_screen.dart';
 import 'profil_screen.dart';
@@ -60,22 +60,22 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            label: 'Home', // 
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.document_scanner_outlined),
             activeIcon: Icon(Icons.document_scanner),
-            label: 'Scan', // 
+            label: 'Scan',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
-            label: 'Riwayat', // 
+            label: 'Riwayat',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: 'Profil', // 
+            label: 'Profil',
           ),
         ],
       ),
