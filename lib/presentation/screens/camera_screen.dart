@@ -13,7 +13,7 @@ class CameraScreen extends StatefulWidget {
   State<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> {
+class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderStateMixin {
   CameraController? _controller;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
@@ -23,9 +23,21 @@ class _CameraScreenState extends State<CameraScreen> {
   List<DetectionResult> _lastDetections = [];
   bool _isFlashOn = false;
 
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _initCameraAndModel();
   }
 
@@ -126,6 +138,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _controller?.stopImageStream();
     _controller?.dispose();
     _apiService.dispose();
@@ -134,39 +147,65 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Stack(
           children: [
-
             if (_isCameraInitialized && _controller != null)
               Positioned.fill(
-                child: CameraPreview(_controller!),
+                child: Builder(builder: (context) {
+                  var camera = _controller!.value;
+                  var scale = size.aspectRatio * camera.aspectRatio;
+                  if (scale < 1) scale = 1 / scale;
+                  
+                  return Transform.scale(
+                    scale: scale,
+                    child: Center(
+                      child: CameraPreview(_controller!),
+                    ),
+                  );
+                }),
               )
             else
               const Center(
                 child: CircularProgressIndicator(color: AppColors.white),
               ),
 
+            // Grid Lines Overlay
+            if (_isCameraInitialized)
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: GridPainter(),
+                ),
+              ),
+
 
 
 
             Center(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.width * 0.8,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.accent.withOpacity(0.8), width: 2),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withOpacity(0.2),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    )
-                  ],
-                ),
+              child: AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Container(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    height: MediaQuery.of(context).size.width * 0.8,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.accent.withOpacity(0.8), width: 2),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withOpacity(0.2 * _pulseAnimation.value),
+                          blurRadius: 20 * _pulseAnimation.value,
+                          spreadRadius: 2 * _pulseAnimation.value,
+                        )
+                      ],
+                    ),
+                    child: child,
+                  );
+                },
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -322,4 +361,26 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
+}
+
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.4)
+      ..strokeWidth = 1.0;
+
+    // Draw 2 vertical lines
+    final thirdWidth = size.width / 3;
+    canvas.drawLine(Offset(thirdWidth, 0), Offset(thirdWidth, size.height), paint);
+    canvas.drawLine(Offset(thirdWidth * 2, 0), Offset(thirdWidth * 2, size.height), paint);
+
+    // Draw 2 horizontal lines
+    final thirdHeight = size.height / 3;
+    canvas.drawLine(Offset(0, thirdHeight), Offset(size.width, thirdHeight), paint);
+    canvas.drawLine(Offset(0, thirdHeight * 2), Offset(size.width, thirdHeight * 2), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

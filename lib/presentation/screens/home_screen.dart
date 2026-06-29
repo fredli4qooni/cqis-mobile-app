@@ -185,7 +185,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 140,
+              height: 160,
               child: historyState.when(
                 loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
                 error: (err, stack) => Center(child: Text('Error: $err')),

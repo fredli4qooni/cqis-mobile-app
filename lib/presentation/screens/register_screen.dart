@@ -16,6 +16,7 @@
 
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/custom_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -31,11 +32,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _selectedRole = 'Petani';
   
   final List<String> _roles = ['Petani', 'Pengepul', 'Pedagang'];
+  
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   void _handleRegister() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fitur Register sedang dalam pengembangan.')),
-    );
+    if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Harap isi semua kolom!')),
+      );
+      return;
+    }
+    
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password dan Konfirmasi Password tidak cocok!')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final AuthResponse res = await Supabase.instance.client.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        data: {
+          'nama_lengkap': _nameController.text.trim(),
+          'role': _selectedRole,
+        },
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (res.user != null) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Registrasi Berhasil'),
+            content: const Text('Akun Anda berhasil dibuat. Silakan login.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context); // Kembali ke halaman login
+                },
+                child: const Text('OK', style: TextStyle(color: AppColors.primary)),
+              ),
+            ],
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan yang tidak terduga')),
+      );
+    }
   }
 
   @override
@@ -62,13 +132,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 32),
             
-            const CustomTextField(
+            CustomTextField(
+              controller: _nameController,
               label: 'Nama Lengkap',
               hint: 'Masukkan nama lengkap',
             ),
             const SizedBox(height: 16),
             
-            const CustomTextField(
+            CustomTextField(
+              controller: _emailController,
               label: 'Email',
               hint: 'Masukkan email aktif',
               keyboardType: TextInputType.emailAddress,
@@ -103,8 +175,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 16),
             
             CustomTextField(
+              controller: _passwordController,
               label: 'Password',
-              hint: 'Minimal 8 karakter',
+              hint: 'Minimal 6 karakter',
               isPassword: !_isPasswordVisible,
               suffixIcon: IconButton(
                 icon: Icon(
@@ -118,7 +191,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 16),
             
-            const CustomTextField(
+            CustomTextField(
+              controller: _confirmPasswordController,
               label: 'Konfirmasi Password',
               hint: 'Ketik ulang password',
               isPassword: true,

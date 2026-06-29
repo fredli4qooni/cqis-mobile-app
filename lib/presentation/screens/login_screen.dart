@@ -17,9 +17,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/custom_text_field.dart';
 import 'register_screen.dart';
 import 'main_screen.dart';
+import '../../providers/history_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -31,11 +33,53 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   void _handleLogin() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fitur Login sedang dalam pengembangan. Silakan Masuk sebagai Tamu.')),
-    );
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan password tidak boleh kosong!')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final res = await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (res.session != null) {
+        ref.invalidate(historyProvider);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
+    } on AuthException catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan tidak terduga')),
+      );
+    }
   }
 
   void _handleGuestLogin() async {
@@ -46,6 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
     
+    ref.invalidate(historyProvider);
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -73,7 +118,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 40),
               
-              const CustomTextField(
+              CustomTextField(
+                controller: _emailController,
                 label: 'Email',
                 hint: 'Masukkan email Anda',
                 keyboardType: TextInputType.emailAddress,
@@ -81,6 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 16),
               
               CustomTextField(
+                controller: _passwordController,
                 label: 'Password',
                 hint: 'Masukkan password Anda',
                 isPassword: !_isPasswordVisible,
@@ -109,7 +156,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
-                  child: const Text('Masuk', style: TextStyle(fontSize: 16)),
+                  child: _isLoading && _emailController.text.isNotEmpty // Quick hack to differentiate loaders
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                        )
+                      : const Text('Masuk', style: TextStyle(fontSize: 16)),
                 ),
               ),
               const SizedBox(height: 16),

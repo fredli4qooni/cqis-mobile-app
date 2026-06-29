@@ -19,7 +19,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/screens/splash_screen.dart';
 
-void main() {
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await initializeDateFormatting('id_ID', null);
+  
+  await Supabase.initialize(
+    url: 'https://creqgridjdxxbopqzoaq.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXFncmlkamR4eGJvcHF6b2FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MjAwMzIsImV4cCI6MjA5ODI5NjAzMn0.0Xl4N5ljr2eC3lcXjf2fSpe1SWYQqC1pBitya1dj0gk',
+  );
+
   runApp(const ProviderScope(child: CQISApp()));
 }
 

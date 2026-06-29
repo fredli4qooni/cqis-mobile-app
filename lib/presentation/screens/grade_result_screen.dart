@@ -19,6 +19,8 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/database_service.dart';
 import '../../services/sni_calculator.dart';
+import '../../services/pdf_service.dart';
+import 'package:printing/printing.dart';
 import 'main_screen.dart';
 
 class GradeResultScreen extends StatelessWidget {
@@ -209,10 +211,17 @@ class GradeResultScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Fitur Ekspor PDF akan segera hadir!')),
-                      );
+                    onPressed: () async {
+                      try {
+                        await Printing.layoutPdf(
+                          onLayout: (format) async => await PdfService.generateQualityReport(scanRecord),
+                          name: 'Laporan_Mutu_CQIS_${scanRecord.id ?? "NEW"}.pdf',
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Gagal membuat PDF: $e')),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.picture_as_pdf),
                     label: const Text('Ekspor PDF'),

@@ -27,7 +27,7 @@ class HistoryNotifier extends StateNotifier<AsyncValue<List<ScanRecord>>> {
     }
   }
   
-  Future<void> deleteScan(int id) async {
+  Future<void> deleteScan(dynamic id) async {
     try {
       await _dbService.deleteScan(id);
       await loadHistory();
