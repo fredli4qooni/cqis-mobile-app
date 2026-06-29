@@ -20,6 +20,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/history_provider.dart';
 import '../../services/database_service.dart';
+import '../widgets/coffee_price_chart.dart';
 import 'pre_condition_screen.dart';
 import 'riwayat_screen.dart';
 import 'grade_result_screen.dart';
@@ -161,7 +162,9 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+            const CoffeePriceChart(),
+            const SizedBox(height: 24),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
