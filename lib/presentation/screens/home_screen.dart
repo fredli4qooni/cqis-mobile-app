@@ -21,6 +21,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/history_provider.dart';
 import '../../services/database_service.dart';
 import '../widgets/coffee_price_chart.dart';
+import 'defect_dictionary_screen.dart';
 import 'pre_condition_screen.dart';
 import 'riwayat_screen.dart';
 import 'grade_result_screen.dart';
@@ -164,7 +165,53 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             const CoffeePriceChart(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
+            
+            // Alat Profesional Section
+            Row(
+              children: [
+                Text(
+                  'Alat Profesional',
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildToolCard(
+                    context,
+                    title: 'Kamus Cacat Kopi',
+                    subtitle: 'Standar Penilaian',
+                    icon: Icons.menu_book,
+                    color: AppColors.primary,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const DefectDictionaryScreen()),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildToolCard(
+                    context,
+                    title: 'Kalkulator Susut',
+                    subtitle: 'Segera Hadir',
+                    icon: Icons.calculate,
+                    color: AppColors.textSecondary,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Fitur Kalkulator segera hadir!')),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -357,6 +404,67 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+  Widget _buildToolCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
