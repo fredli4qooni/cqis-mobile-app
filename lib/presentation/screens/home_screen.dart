@@ -24,7 +24,9 @@ import '../widgets/coffee_price_chart.dart';
 import 'defect_dictionary_screen.dart';
 import 'pre_condition_screen.dart';
 import 'riwayat_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'grade_result_screen.dart';
+import 'profil_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -32,6 +34,11 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyState = ref.watch(historyProvider);
+    final user = Supabase.instance.client.auth.currentUser;
+    final userName = user?.userMetadata?['name'] ?? user?.email?.split('@')[0] ?? 'Tamu';
+    final capitalizedName = userName.isNotEmpty 
+        ? userName.substring(0, 1).toUpperCase() + userName.substring(1) 
+        : 'Tamu';
 
 
     return Scaffold(
@@ -60,7 +67,12 @@ class HomeScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.account_circle, color: AppColors.white),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -70,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Selamat datang, Tamu!',
+              'Selamat datang, $capitalizedName!',
               style: Theme.of(
                 context,
               ).textTheme.displayLarge?.copyWith(fontSize: 22),
