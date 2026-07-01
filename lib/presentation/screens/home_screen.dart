@@ -189,39 +189,18 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildToolCard(
-                    context,
-                    title: 'Kamus Cacat Kopi',
-                    subtitle: 'Standar Penilaian',
-                    icon: Icons.menu_book,
-                    color: AppColors.primary,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const DefectDictionaryScreen()),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildToolCard(
-                    context,
-                    title: 'Kalkulator Susut',
-                    subtitle: 'Segera Hadir',
-                    icon: Icons.calculate,
-                    color: AppColors.textSecondary,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Fitur Kalkulator segera hadir!')),
-                      );
-                    },
-                  ),
-                ),
-              ],
+            _buildToolCard(
+              context,
+              title: 'Kamus Cacat Kopi',
+              subtitle: 'Standar Penilaian',
+              icon: Icons.menu_book,
+              color: AppColors.primary,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DefectDictionaryScreen()),
+                );
+              },
             ),
             const SizedBox(height: 32),
 

@@ -96,7 +96,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       MaterialPageRoute(builder: (context) => const MainScreen()),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
