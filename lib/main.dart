@@ -29,7 +29,7 @@ void main() async {
   
   await Supabase.initialize(
     url: 'https://creqgridjdxxbopqzoaq.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXFncmlkamR4eGJvcHF6b2FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MjAwMzIsImV4cCI6MjA5ODI5NjAzMn0.0Xl4N5ljr2eC3lcXjf2fSpe1SWYQqC1pBitya1dj0gk',
+    publishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXFncmlkamR4eGJvcHF6b2FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MjAwMzIsImV4cCI6MjA5ODI5NjAzMn0.0Xl4N5ljr2eC3lcXjf2fSpe1SWYQqC1pBitya1dj0gk',
   );
 
   runApp(const ProviderScope(child: CQISApp()));

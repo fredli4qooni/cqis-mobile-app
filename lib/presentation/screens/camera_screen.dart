@@ -1,4 +1,4 @@
-import 'dart:ui' as _ui;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,8 +19,6 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
   bool _isCameraInitialized = false;
 
   final ApiService _apiService = ApiService();
-  bool _isProcessingFrame = false;
-  List<DetectionResult> _lastDetections = [];
   bool _isFlashOn = false;
 
   late AnimationController _pulseController;
@@ -213,7 +211,7 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: BackdropFilter(
-                        filter: _ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
@@ -243,7 +241,7 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
                     child: BackdropFilter(
-                      filter: _ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
@@ -277,7 +275,7 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
-                    filter: _ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.3),
@@ -301,7 +299,7 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
               right: 0,
               child: ClipRRect(
                 child: BackdropFilter(
-                  filter: _ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                   child: Container(
                     padding: const EdgeInsets.only(bottom: 40, top: 20),
                     decoration: BoxDecoration(

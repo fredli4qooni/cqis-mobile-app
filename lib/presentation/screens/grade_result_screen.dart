@@ -202,7 +202,7 @@ class GradeResultScreen extends StatelessWidget {
                       Padding(padding: const EdgeInsets.all(8.0), child: Text(totalValue.toStringAsFixed(1), textAlign: TextAlign.center)),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
             const SizedBox(height: 32),
@@ -218,6 +218,7 @@ class GradeResultScreen extends StatelessWidget {
                           name: 'Laporan_Mutu_CQIS_${scanRecord.id ?? "NEW"}.pdf',
                         );
                       } catch (e) {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Gagal membuat PDF: $e')),
                         );

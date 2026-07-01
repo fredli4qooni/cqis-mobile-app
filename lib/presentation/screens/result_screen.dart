@@ -5,7 +5,7 @@ import '../../services/api_service.dart';
 import '../../providers/history_provider.dart';
 import '../../services/database_service.dart';
 import '../../services/sni_calculator.dart';
-import 'dart:ui' as _ui;
+import 'dart:ui' as ui;
 import 'grade_result_screen.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
@@ -13,13 +13,13 @@ class ResultScreen extends ConsumerStatefulWidget {
   final ApiService apiService;
 
   const ResultScreen({
-    Key? key,
+    super.key,
     required this.imagePaths,
     required this.apiService,
-  }) : super(key: key);
+  });
 
   @override
-  _ResultScreenState createState() => _ResultScreenState();
+  ConsumerState<ResultScreen> createState() => _ResultScreenState();
 }
 
 class _ResultScreenState extends ConsumerState<ResultScreen> {
@@ -31,7 +31,6 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   int _imageHeight = 0;
   int _totalBeansAllImages = 0;
   int _totalDefectCountAllImages = 0;
-  double _defectScore = 0;
   int _processedCount = 0;
   ScanRecord? _currentRecord;
 
@@ -97,7 +96,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           _results = lastImageDetections;
           _totalBeansAllImages = totalBeans;
           _totalDefectCountAllImages = totalDefectCount;
-          _defectScore = sniResult.totalScore;
+          
           _currentRecord = record;
           _isProcessing = false;
         });
@@ -215,7 +214,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
     return ClipRRect(
       child: BackdropFilter(
-        filter: _ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           decoration: BoxDecoration(
