@@ -20,6 +20,7 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
 
   final ApiService _apiService = ApiService();
   bool _isFlashOn = false;
+  List<String> _batchImages = [];
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -85,17 +86,18 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
     }
 
     try {
-
       final XFile picture = await _controller!.takePicture();
 
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(
-              imagePaths: [picture.path],
-              apiService: _apiService,
-            ),
+        setState(() {
+          _batchImages.add(picture.path);
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Foto ditambahkan ke batch (${_batchImages.length})'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -108,6 +110,26 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
     }
   }
 
+  void _finishBatchAndProcess() {
+    if (_batchImages.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResultScreen(
+          imagePaths: _batchImages,
+          apiService: _apiService,
+        ),
+      ),
+    ).then((_) {
+      // Clear batch when returning
+      if (mounted) {
+        setState(() {
+          _batchImages.clear();
+        });
+      }
+    });
+  }
+
   Future<void> _pickImagesFromGallery() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -115,13 +137,15 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
 
       if (images.isNotEmpty && mounted) {
         final List<String> paths = images.map((e) => e.path).toList();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(
-              imagePaths: paths,
-              apiService: _apiService,
-            ),
+        setState(() {
+          _batchImages.addAll(paths);
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${paths.length} foto ditambahkan dari galeri'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -137,7 +161,6 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _pulseController.dispose();
-    _controller?.stopImageStream();
     _controller?.dispose();
     _apiService.dispose();
     super.dispose();
@@ -292,6 +315,32 @@ class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderSt
               ),
             ),
 
+            // Selesai Batch Button
+            if (_batchImages.isNotEmpty)
+              Positioned(
+                bottom: 140, // Above the shutter panel
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ElevatedButton.icon(
+                    onPressed: _finishBatchAndProcess,
+                    icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                    label: Text(
+                      'Selesai & Cek Mutu (${_batchImages.length} Foto)',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD4AF37), // Golden color for primary action
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      elevation: 8,
+                    ),
+                  ),
+                ),
+              ),
 
             Positioned(
               bottom: 0,

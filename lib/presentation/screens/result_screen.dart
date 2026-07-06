@@ -73,8 +73,24 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         }
       }
 
+      // Ambil data master dari Supabase / Cache
+      final dbService = DatabaseService();
+      final defectDict = await dbService.fetchDefectDictionary();
+      final gradeRules = await dbService.fetchGradeRules();
 
-      final sniResult = SniCalculator.evaluate(aggregatedDetails);
+      final sniResult = SniCalculator.evaluate(aggregatedDetails, defectDict, gradeRules);
+
+      final rawDets = lastImageDetections.map((d) => {
+        'class_index': d.classIndex,
+        'confidence': d.confidence,
+        'label': d.label,
+        'bbox': {
+          'left': d.boundingBox.left,
+          'top': d.boundingBox.top,
+          'right': d.boundingBox.right,
+          'bottom': d.boundingBox.bottom,
+        }
+      }).toList();
 
       if (mounted) {
         final record = ScanRecord(
@@ -85,8 +101,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           totalBeans: totalBeans,
           grade: sniResult.grade,
           defectDetails: aggregatedDetails,
+          rawDetections: rawDets,
+          imageWidth: lastImageWidth,
+          imageHeight: lastImageHeight,
         );
-
 
         ref.read(historyProvider.notifier).addScan(record);
 
@@ -204,6 +222,17 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             ],
           ),
         ),
+        if (widget.imagePaths.length > 1)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            width: double.infinity,
+            color: Colors.blue.withOpacity(0.8),
+            child: Text(
+              'Menampilkan hasil akumulasi dari ${widget.imagePaths.length} batch foto',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
         _buildBottomPanel(),
       ],
     );

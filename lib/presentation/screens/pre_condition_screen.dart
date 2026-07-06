@@ -29,8 +29,9 @@ class _PreConditionScreenState extends State<PreConditionScreen> {
   bool isMoistureValid = false;
   bool isNoInsects = false;
   bool isNoBadOdor = false;
+  bool isSampleWeighed = false;
 
-  bool get isAllChecked => isMoistureValid && isNoInsects && isNoBadOdor;
+  bool get isAllChecked => isMoistureValid && isNoInsects && isNoBadOdor && isSampleWeighed;
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +80,16 @@ class _PreConditionScreenState extends State<PreConditionScreen> {
               value: isNoBadOdor,
               onChanged: (val) => setState(() => isNoBadOdor = val ?? false),
               secondary: const Icon(Icons.coronavirus_outlined, color: AppColors.secondary),
+            ),
+            const Divider(),
+
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              activeColor: AppColors.primary,
+              title: const Text('Timbang sampel kopi sebanyak 300 gram (bagi ke bbrp foto jika banyak)'),
+              value: isSampleWeighed,
+              onChanged: (val) => setState(() => isSampleWeighed = val ?? false),
+              secondary: const Icon(Icons.scale_outlined, color: AppColors.secondary),
             ),
             
             const Spacer(),

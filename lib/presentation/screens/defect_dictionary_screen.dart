@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/defect_data.dart';
+import '../../services/database_service.dart';
 
 class DefectDictionaryScreen extends StatefulWidget {
   const DefectDictionaryScreen({super.key});
@@ -11,17 +11,36 @@ class DefectDictionaryScreen extends StatefulWidget {
 
 class _DefectDictionaryScreenState extends State<DefectDictionaryScreen> {
   String _selectedFilter = 'Semua';
-  
-  List<CoffeeDefect> get _filteredDefects {
-    if (_selectedFilter == 'Cacat Berat') {
-      return DefectDataStore.defects.where((d) => d.category == DefectCategory.berat).toList();
-    } else if (_selectedFilter == 'Cacat Ringan') {
-      return DefectDataStore.defects.where((d) => d.category == DefectCategory.ringan).toList();
-    }
-    return DefectDataStore.defects;
+  List<DefectDictionary> _allDefects = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
   }
 
-  void _showDefectDetail(BuildContext context, CoffeeDefect defect) {
+  Future<void> _fetchData() async {
+    final dbService = DatabaseService();
+    final defects = await dbService.fetchDefectDictionary();
+    if (mounted) {
+      setState(() {
+        _allDefects = defects;
+        _isLoading = false;
+      });
+    }
+  }
+  
+  List<DefectDictionary> get _filteredDefects {
+    if (_selectedFilter == 'Cacat Major') {
+      return _allDefects.where((d) => d.category.toLowerCase() == 'major').toList();
+    } else if (_selectedFilter == 'Cacat Minor') {
+      return _allDefects.where((d) => d.category.toLowerCase() == 'minor').toList();
+    }
+    return _allDefects;
+  }
+
+  void _showDefectDetail(BuildContext context, DefectDictionary defect) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -39,7 +58,9 @@ class _DefectDictionaryScreenState extends State<DefectDictionaryScreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
-      body: Column(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
         children: [
           // Filters
           SingleChildScrollView(
@@ -49,9 +70,9 @@ class _DefectDictionaryScreenState extends State<DefectDictionaryScreen> {
               children: [
                 _buildFilterChip('Semua'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Cacat Berat'),
+                _buildFilterChip('Cacat Major'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Cacat Ringan'),
+                _buildFilterChip('Cacat Minor'),
               ],
             ),
           ),
@@ -63,7 +84,7 @@ class _DefectDictionaryScreenState extends State<DefectDictionaryScreen> {
               itemCount: _filteredDefects.length,
               itemBuilder: (context, index) {
                 final defect = _filteredDefects[index];
-                final isBerat = defect.category == DefectCategory.berat;
+                final isMajor = defect.category.toLowerCase() == 'major';
                 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -78,12 +99,12 @@ class _DefectDictionaryScreenState extends State<DefectDictionaryScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isBerat ? AppColors.danger.withOpacity(0.1) : AppColors.warning.withOpacity(0.1),
+                              color: isMajor ? AppColors.danger.withOpacity(0.1) : AppColors.warning.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
-                              defect.icon,
-                              color: isBerat ? AppColors.danger : AppColors.warning,
+                              Icons.circle,
+                              color: isMajor ? AppColors.danger : AppColors.warning,
                               size: 28,
                             ),
                           ),
@@ -102,11 +123,11 @@ class _DefectDictionaryScreenState extends State<DefectDictionaryScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: isBerat ? AppColors.danger : AppColors.warning,
+                                    color: isMajor ? AppColors.danger : AppColors.warning,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    isBerat ? 'Cacat Berat' : 'Cacat Ringan',
+                                    isMajor ? 'Cacat Major' : 'Cacat Minor',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 10,
@@ -153,13 +174,13 @@ class _DefectDictionaryScreenState extends State<DefectDictionaryScreen> {
 }
 
 class _DefectDetailSheet extends StatelessWidget {
-  final CoffeeDefect defect;
+  final DefectDictionary defect;
 
   const _DefectDetailSheet({required this.defect});
 
   @override
   Widget build(BuildContext context) {
-    final isBerat = defect.category == DefectCategory.berat;
+    final isMajor = defect.category.toLowerCase() == 'major';
     
     return Container(
       padding: const EdgeInsets.all(24),
@@ -189,8 +210,8 @@ class _DefectDetailSheet extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  defect.icon,
-                  color: isBerat ? AppColors.danger : AppColors.warning,
+                  Icons.circle,
+                  color: isMajor ? AppColors.danger : AppColors.warning,
                   size: 40,
                 ),
                 const SizedBox(width: 16),
@@ -207,9 +228,9 @@ class _DefectDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        isBerat ? 'Cacat Berat' : 'Cacat Ringan',
+                        isMajor ? 'Cacat Major' : 'Cacat Minor',
                         style: TextStyle(
-                          color: isBerat ? AppColors.danger : AppColors.warning,
+                          color: isMajor ? AppColors.danger : AppColors.warning,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -222,27 +243,18 @@ class _DefectDetailSheet extends StatelessWidget {
             
             _buildSection(
               context,
-              title: 'Penyebab',
-              icon: Icons.search,
-              content: defect.cause,
+              title: 'Bobot Penalti (Score)',
+              icon: Icons.calculate,
+              content: 'Setiap 1 keping cacat ini akan mengurangi poin mutu sebesar ${defect.penaltyScore}',
               color: AppColors.textPrimary,
             ),
             const SizedBox(height: 16),
             
             _buildSection(
               context,
-              title: 'Dampak Rasa',
-              icon: Icons.coffee,
-              content: defect.impact,
-              color: AppColors.danger,
-            ),
-            const SizedBox(height: 16),
-            
-            _buildSection(
-              context,
-              title: 'Solusi & Pencegahan',
-              icon: Icons.check_circle_outline,
-              content: defect.solution,
+              title: 'Toleransi',
+              icon: Icons.info_outline,
+              content: defect.tolerance.isNotEmpty ? defect.tolerance : 'Tidak ada toleransi khusus',
               color: AppColors.primary,
             ),
             const SizedBox(height: 32),

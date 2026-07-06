@@ -50,3 +50,7 @@ app.*.map.json
 venv/
 __pycache__/
 *.npy
+
+/diagram
+/out
+/admin_web

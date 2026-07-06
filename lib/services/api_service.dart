@@ -34,7 +34,7 @@ class ApiService {
 
 
 
-  final String baseUrl = 'http://10.194.155.249:5000';
+  final String baseUrl = 'http://10.166.11.249:5000';
 
   Future<void> loadModel() async {
 
@@ -46,8 +46,8 @@ class ApiService {
     request.files.add(await http.MultipartFile.fromPath('file', imagePath));
 
     try {
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
+      var streamedResponse = await request.send().timeout(const Duration(seconds: 15));
+      var response = await http.Response.fromStream(streamedResponse).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);

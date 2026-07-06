@@ -33,9 +33,15 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   rename: ^3.1.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/images/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/cqis-logo.png"

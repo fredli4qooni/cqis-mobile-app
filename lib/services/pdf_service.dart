@@ -12,7 +12,7 @@ class PdfService {
     
     // Identitas Pengguna
     final user = Supabase.instance.client.auth.currentUser;
-    final userName = user?.userMetadata?['nama_lengkap'] ?? 'Pengguna Tamu';
+    final userName = user?.userMetadata?['full_name'] ?? 'Pengguna Tamu';
     final userRole = user?.userMetadata?['role'] ?? 'Guest Mode';
 
     // Rincian Cacat (hanya yang > 0 dan bukan 'normal')
@@ -141,9 +141,9 @@ class PdfService {
     final tableHeaders = ['Jenis Cacat', 'Jumlah Keping', 'Bobot Nilai', 'Total Nilai'];
     
     final tableData = defectsOnly.map((defect) {
-      final name = SniCalculator.getLabelName(defect.key);
+      final name = SniCalculator.getLabelName(defect.key, DatabaseService.cachedDictionary);
       final count = defect.value;
-      final weight = SniCalculator.getDefectWeight(defect.key);
+      final weight = SniCalculator.getDefectWeight(defect.key, DatabaseService.cachedDictionary);
       final total = count * weight;
       
       return [

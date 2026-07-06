@@ -53,7 +53,7 @@ class _ProfilScreenState extends ConsumerState<ProfilScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isGuest = _user == null;
-    final String name = _user?.userMetadata?['nama_lengkap'] ?? 'Pengguna Tamu';
+    final String name = _user?.userMetadata?['full_name'] ?? 'Pengguna Tamu';
     final String email = _user?.email ?? 'Akses Sementara (Data disimpan lokal)';
     final String role = _user?.userMetadata?['role'] ?? 'Mode Tamu';
     return Scaffold(

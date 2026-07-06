@@ -29,27 +29,22 @@ class GradeResultScreen extends StatelessWidget {
   const GradeResultScreen({super.key, required this.scanRecord});
 
   String _getGradeDescription(String grade) {
-    switch (grade) {
-      case "Mutu 1": return "Kualitas Ekspor Premium (Sangat Baik)";
-      case "Mutu 2": return "Kualitas Baik untuk Ekspor";
-      case "Mutu 3": return "Kualitas Standar Ekspor";
-      case "Mutu 4a": return "Kualitas Menengah Atas";
-      case "Mutu 4b": return "Kualitas Menengah Bawah";
-      case "Mutu 5": return "Kualitas Lokal Biasa";
-      case "Mutu 6": return "Kualitas Rendah (Reject)";
-      default: return "Tidak terdefinisi";
+    final rules = DatabaseService.cachedGradeRules;
+    try {
+      final match = rules.firstWhere((r) => r.gradeName == grade);
+      return match.description;
+    } catch (_) {
+      return "Tidak terdefinisi";
     }
   }
 
   double _getMaxScoreForGrade(String grade) {
-    switch (grade) {
-      case "Mutu 1": return 11;
-      case "Mutu 2": return 25;
-      case "Mutu 3": return 44;
-      case "Mutu 4a": return 60;
-      case "Mutu 4b": return 80;
-      case "Mutu 5": return 150;
-      default: return 225;
+    final rules = DatabaseService.cachedGradeRules;
+    try {
+      final match = rules.firstWhere((r) => r.gradeName == grade);
+      return match.maxDefect;
+    } catch (_) {
+      return 225; // fallback
     }
   }
 
@@ -99,7 +94,7 @@ class GradeResultScreen extends StatelessWidget {
       ));
     } else {
       for (var defect in defectsOnly) {
-        double weight = SniCalculator.getDefectWeight(defect.key);
+        double weight = SniCalculator.getDefectWeight(defect.key, DatabaseService.cachedDictionary);
         double value = defect.value * weight;
 
         pieSections.add(
@@ -193,11 +188,11 @@ class GradeResultScreen extends StatelessWidget {
                   ],
                 ),
                 ...defectsOnly.map((defect) {
-                  double weight = SniCalculator.getDefectWeight(defect.key);
+                  double weight = SniCalculator.getDefectWeight(defect.key, DatabaseService.cachedDictionary);
                   double totalValue = defect.value * weight;
                   return TableRow(
                     children: [
-                      Padding(padding: const EdgeInsets.all(8.0), child: Text(SniCalculator.getLabelName(defect.key))),
+                      Padding(padding: const EdgeInsets.all(8.0), child: Text(SniCalculator.getLabelName(defect.key, DatabaseService.cachedDictionary))),
                       Padding(padding: const EdgeInsets.all(8.0), child: Text('${defect.value}', textAlign: TextAlign.center)),
                       Padding(padding: const EdgeInsets.all(8.0), child: Text(totalValue.toStringAsFixed(1), textAlign: TextAlign.center)),
                     ],
