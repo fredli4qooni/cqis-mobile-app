@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/history_provider.dart';
+import '../../services/database_service.dart';
 import 'grade_result_screen.dart';
 
 class RiwayatScreen extends ConsumerStatefulWidget {
@@ -108,11 +109,24 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
                   );
                 }
 
+                final Map<String, List<ScanRecord>> groupedScans = {};
+                for (var scan in filteredData) {
+                  final key = scan.timestamp.toIso8601String().substring(0, 19);
+                  if (!groupedScans.containsKey(key)) {
+                    groupedScans[key] = [];
+                  }
+                  groupedScans[key]!.add(scan);
+                }
+
+                final sortedKeys = groupedScans.keys.toList()..sort((a, b) => b.compareTo(a));
+
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: filteredData.length,
+                  itemCount: sortedKeys.length,
                   itemBuilder: (context, index) {
-                    final item = filteredData[index];
+                    final key = sortedKeys[index];
+                    final batch = groupedScans[key]!;
+                    final item = batch.first;
                     final color = _getGradeColor(item.grade);
                     
                     return Card(
@@ -124,7 +138,7 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => GradeResultScreen(scanRecord: item),
+                              builder: (context) => GradeResultScreen(scanRecords: batch),
                             ),
                           );
                         },
@@ -155,7 +169,19 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
                                     const SizedBox(height: 4),
                                     Text(item.timestamp.toString().substring(0, 16), style: Theme.of(context).textTheme.bodyLarge),
                                     const SizedBox(height: 4),
-                                    Text('Nilai Cacat: ${item.defectScore.toStringAsFixed(1)}', style: Theme.of(context).textTheme.bodyMedium),
+                                    Row(
+                                      children: [
+                                        Text('Nilai Cacat: ${item.defectScore.toStringAsFixed(1)}', style: Theme.of(context).textTheme.bodyMedium),
+                                        if (batch.length > 1) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(4)),
+                                            child: Text('${batch.length} Gbr', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                          )
+                                        ]
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),

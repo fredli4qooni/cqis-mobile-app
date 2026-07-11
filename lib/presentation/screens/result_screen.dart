@@ -8,6 +8,8 @@ import '../../services/sni_calculator.dart';
 import 'dart:ui' as ui;
 import 'grade_result_screen.dart';
 
+import '../widgets/bounding_box_painter.dart';
+
 class ResultScreen extends ConsumerStatefulWidget {
   final List<String> imagePaths;
   final ApiService apiService;
@@ -24,20 +26,19 @@ class ResultScreen extends ConsumerStatefulWidget {
 
 class _ResultScreenState extends ConsumerState<ResultScreen> {
   bool _isProcessing = true;
-  List<DetectionResult> _results = [];
+  List<InferenceOutput> _batchOutputs = [];
+  int _currentPageIndex = 0;
+  final PageController _pageController = PageController();
+  
   String? _errorMessage;
-  File? _imageFile;
-  int _imageWidth = 0;
-  int _imageHeight = 0;
   int _totalBeansAllImages = 0;
   int _totalDefectCountAllImages = 0;
   int _processedCount = 0;
-  ScanRecord? _currentRecord;
+  List<ScanRecord> _currentRecords = [];
 
   @override
   void initState() {
     super.initState();
-    _imageFile = File(widget.imagePaths.first);
     _processImage();
   }
 
@@ -46,17 +47,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       Map<String, int> aggregatedDetails = {};
       int totalDefectCount = 0;
       int totalBeans = 0;
-      List<DetectionResult> lastImageDetections = [];
-      int lastImageWidth = 0;
-      int lastImageHeight = 0;
 
       for (int i = 0; i < widget.imagePaths.length; i++) {
         final path = widget.imagePaths[i];
         final output = await widget.apiService.runInferenceOnImage(path);
 
-        lastImageDetections = output.detections;
-        lastImageWidth = output.imageWidth;
-        lastImageHeight = output.imageHeight;
+        _batchOutputs.add(output);
         totalBeans += output.detections.length;
 
         for (var d in output.detections) {
@@ -80,43 +76,45 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
       final sniResult = SniCalculator.evaluate(aggregatedDetails, defectDict, gradeRules);
 
-      final rawDets = lastImageDetections.map((d) => {
-        'class_index': d.classIndex,
-        'confidence': d.confidence,
-        'label': d.label,
-        'bbox': {
-          'left': d.boundingBox.left,
-          'top': d.boundingBox.top,
-          'right': d.boundingBox.right,
-          'bottom': d.boundingBox.bottom,
-        }
-      }).toList();
-
       if (mounted) {
-        final record = ScanRecord(
-          timestamp: DateTime.now(),
-          imagePath: widget.imagePaths.first,
-          defectCount: totalDefectCount,
-          defectScore: sniResult.totalScore,
-          totalBeans: totalBeans,
-          grade: sniResult.grade,
-          defectDetails: aggregatedDetails,
-          rawDetections: rawDets,
-          imageWidth: lastImageWidth,
-          imageHeight: lastImageHeight,
-        );
+        List<ScanRecord> generatedRecords = [];
+        final batchTimestamp = DateTime.now();
+        for (int i = 0; i < widget.imagePaths.length; i++) {
+          final output = _batchOutputs[i];
+          final rawDets = output.detections.map((d) => {
+            'class_index': d.classIndex,
+            'confidence': d.confidence,
+            'label': d.label,
+            'bbox': {
+              'left': d.boundingBox.left,
+              'top': d.boundingBox.top,
+              'right': d.boundingBox.right,
+              'bottom': d.boundingBox.bottom,
+            },
+            'polygon': d.polygon.map((pt) => [pt.dx, pt.dy]).toList(),
+          }).toList();
 
-        ref.read(historyProvider.notifier).addScan(record);
+          final record = ScanRecord(
+            timestamp: batchTimestamp,
+            imagePath: widget.imagePaths[i],
+            defectCount: totalDefectCount,
+            defectScore: sniResult.totalScore,
+            totalBeans: totalBeans,
+            grade: sniResult.grade,
+            defectDetails: aggregatedDetails,
+            rawDetections: rawDets,
+            imageWidth: output.imageWidth,
+            imageHeight: output.imageHeight,
+          );
+
+          generatedRecords.add(record);
+        }
 
         setState(() {
-          _imageWidth = lastImageWidth;
-          _imageHeight = lastImageHeight;
-          _results = lastImageDetections;
+          _isProcessing = false;
           _totalBeansAllImages = totalBeans;
           _totalDefectCountAllImages = totalDefectCount;
-          
-          _currentRecord = record;
-          _isProcessing = false;
+          _currentRecords = generatedRecords;
         });
       }
     } catch (e) {
@@ -190,36 +188,49 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     return Column(
       children: [
         Expanded(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (_imageFile != null)
-                ColorFiltered(
-                  colorFilter: const ColorFilter.matrix([
-                    1.2, 0, 0, 0, 30,
-                    0, 1.2, 0, 0, 30,
-                    0, 0, 1.2, 0, 30,
-                    0, 0, 0, 1, 0,
-                  ]),
-                  child: Image.file(
-                    _imageFile!,
-                    fit: BoxFit.contain,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPageIndex = index;
+              });
+            },
+            itemCount: widget.imagePaths.length,
+            itemBuilder: (context, index) {
+              final path = widget.imagePaths[index];
+              final output = _batchOutputs.length > index ? _batchOutputs[index] : null;
+              
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColorFiltered(
+                    colorFilter: const ColorFilter.matrix([
+                      1.2, 0, 0, 0, 30,
+                      0, 1.2, 0, 0, 30,
+                      0, 0, 1.2, 0, 30,
+                      0, 0, 0, 1, 0,
+                    ]),
+                    child: Image.file(
+                      File(path),
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                ),
-              if (_results.isNotEmpty && _imageWidth > 0 && _imageHeight > 0 && widget.imagePaths.length == 1)
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return CustomPaint(
-                      size: Size(constraints.maxWidth, constraints.maxHeight),
-                      painter: _StaticBoundingBoxPainter(
-                        results: _results,
-                        imageWidth: _imageWidth.toDouble(),
-                        imageHeight: _imageHeight.toDouble(),
-                      ),
-                    );
-                  }
-                ),
-            ],
+                  if (output != null && output.detections.isNotEmpty && output.imageWidth > 0 && output.imageHeight > 0)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        return CustomPaint(
+                          painter: BoundingBoxPainter(
+                            output != null ? output.detections : [],
+                            output?.imageWidth ?? 1,
+                            output?.imageHeight ?? 1,
+                          ),
+                          child: Container(),
+                        );
+                      }
+                    ),
+                ],
+              );
+            },
           ),
         ),
         if (widget.imagePaths.length > 1)
@@ -227,10 +238,16 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             width: double.infinity,
             color: Colors.blue.withOpacity(0.8),
-            child: Text(
-              'Menampilkan hasil akumulasi dari ${widget.imagePaths.length} batch foto',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.swipe, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  'Gambar ${_currentPageIndex + 1} dari ${widget.imagePaths.length}  •  Geser untuk melihat semua',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
           ),
         _buildBottomPanel(),
@@ -288,11 +305,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                     ),
                   ),
                   onPressed: () {
-                    if (_currentRecord != null) {
+                    if (_currentRecords.isNotEmpty) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => GradeResultScreen(scanRecord: _currentRecord!),
+                          builder: (context) => GradeResultScreen(scanRecords: _currentRecords),
                         ),
                       );
                     }
@@ -306,116 +323,4 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       ),
     );
   }
-}
-
-class _StaticBoundingBoxPainter extends CustomPainter {
-  final List<DetectionResult> results;
-  final double imageWidth;
-  final double imageHeight;
-
-  _StaticBoundingBoxPainter({
-    required this.results,
-    required this.imageWidth,
-    required this.imageHeight,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (results.isEmpty) return;
-
-
-    final double scaleX = size.width / imageWidth;
-    final double scaleY = size.height / imageHeight;
-    final double scale = scaleX < scaleY ? scaleX : scaleY;
-
-
-    final double offsetX = (size.width - (imageWidth * scale)) / 2;
-    final double offsetY = (size.height - (imageHeight * scale)) / 2;
-
-    final paintBox = Paint()
-      ..color = Colors.red
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
-
-    final paintTextBg = Paint()..color = Colors.red.withOpacity(0.8);
-
-    for (var result in results) {
-      final rect = result.boundingBox;
-
-
-      final left = (rect.left * scale) + offsetX;
-      final top = (rect.top * scale) + offsetY;
-      final right = (rect.right * scale) + offsetX;
-      final bottom = (rect.bottom * scale) + offsetY;
-
-      final displayRect = Rect.fromLTRB(left, top, right, bottom);
-
-
-      if (result.polygon.isNotEmpty) {
-        final path = Path();
-        for (int i = 0; i < result.polygon.length; i++) {
-          final pt = result.polygon[i];
-          final px = (pt.dx * scale) + offsetX;
-          final py = (pt.dy * scale) + offsetY;
-
-          if (i == 0) {
-            path.moveTo(px, py);
-          } else {
-            path.lineTo(px, py);
-          }
-        }
-        path.close();
-
-        final paintPolyFill = Paint()
-          ..color = Colors.blue.withOpacity(0.3)
-          ..style = PaintingStyle.fill;
-
-        final paintPolyStroke = Paint()
-          ..color = Colors.blue
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0;
-
-        canvas.drawPath(path, paintPolyFill);
-        canvas.drawPath(path, paintPolyStroke);
-      } else {
-
-        canvas.drawRect(displayRect, paintBox);
-      }
-
-
-      final textSpan = TextSpan(
-        text: '${result.label} ${(result.confidence * 100).toStringAsFixed(0)}%',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      );
-
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      );
-
-      textPainter.layout();
-
-      canvas.drawRect(
-        Rect.fromLTWH(
-          displayRect.left,
-          displayRect.top - textPainter.height,
-          textPainter.width + 4,
-          textPainter.height + 4,
-        ),
-        paintTextBg,
-      );
-
-      textPainter.paint(
-        canvas,
-        Offset(displayRect.left + 2, displayRect.top - textPainter.height + 2),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

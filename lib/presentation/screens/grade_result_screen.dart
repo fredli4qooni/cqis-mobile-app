@@ -21,12 +21,38 @@ import '../../services/database_service.dart';
 import '../../services/sni_calculator.dart';
 import '../../services/pdf_service.dart';
 import 'package:printing/printing.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/history_provider.dart';
 import 'main_screen.dart';
+import 'annotated_image_screen.dart';
 
-class GradeResultScreen extends StatelessWidget {
-  final ScanRecord scanRecord;
+class GradeResultScreen extends ConsumerStatefulWidget {
+  final List<ScanRecord> scanRecords;
 
-  const GradeResultScreen({super.key, required this.scanRecord});
+  const GradeResultScreen({super.key, required this.scanRecords});
+
+  @override
+  ConsumerState<GradeResultScreen> createState() => _GradeResultScreenState();
+}
+
+class _GradeResultScreenState extends ConsumerState<GradeResultScreen> {
+  bool _isLoadingCache = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (DatabaseService.cachedGradeRules.isEmpty || DatabaseService.cachedDictionary.isEmpty) {
+      _loadCache();
+    }
+  }
+
+  Future<void> _loadCache() async {
+    setState(() => _isLoadingCache = true);
+    final db = DatabaseService();
+    await db.fetchGradeRules();
+    await db.fetchDefectDictionary();
+    if (mounted) setState(() => _isLoadingCache = false);
+  }
 
   String _getGradeDescription(String grade) {
     final rules = DatabaseService.cachedGradeRules;
@@ -50,6 +76,14 @@ class GradeResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingCache) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+
+    final scanRecord = widget.scanRecords.first;
     final defectDetails = scanRecord.defectDetails;
 
 
@@ -225,20 +259,40 @@ class GradeResultScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MainScreen()),
-                        (Route<dynamic> route) => false,
-                      );
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Simpan & Selesai'),
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                if (scanRecord.id != null)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnnotatedImageScreen(scanRecords: widget.scanRecords),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.image),
+                      label: const Text('Lihat Gambar Anotasi'),
+                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        for (var record in widget.scanRecords) {
+                          ref.read(historyProvider.notifier).addScan(record);
+                        }
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MainScreen()),
+                          (Route<dynamic> route) => false,
+                        );
+                      },
+                      icon: const Icon(Icons.check),
+                      label: const Text('Simpan & Selesai'),
+                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                    ),
                   ),
-                ),
               ],
             ),
           ],

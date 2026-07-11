@@ -20,6 +20,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'login_screen.dart';
 import '../../providers/history_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'edit_profil_screen.dart';
+import 'change_password_screen.dart';
 
 class ProfilScreen extends ConsumerStatefulWidget {
   const ProfilScreen({super.key});
@@ -74,7 +77,12 @@ class _ProfilScreenState extends ConsumerState<ProfilScreen> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: AppColors.textSecondary.withOpacity(0.2),
-                    child: const Icon(Icons.person_outline, size: 40, color: AppColors.textSecondary),
+                    backgroundImage: _user?.userMetadata?['avatar_url'] != null
+                        ? NetworkImage(_user!.userMetadata!['avatar_url'])
+                        : null,
+                    child: _user?.userMetadata?['avatar_url'] == null
+                        ? const Icon(Icons.person_outline, size: 40, color: AppColors.textSecondary)
+                        : null,
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -103,21 +111,37 @@ class _ProfilScreenState extends ConsumerState<ProfilScreen> {
             
             if (!isGuest)
               _buildMenuGroup(context, 'Pengaturan Akun', [
-                _buildMenuItem(Icons.edit_outlined, 'Edit Profil', () {}),
-                _buildMenuItem(Icons.lock_outline, 'Ganti Password', () {}),
+                _buildMenuItem(Icons.edit_outlined, 'Edit Profil', () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const EditProfilScreen()),
+                  ).then((_) => setState(() {
+                    _user = Supabase.instance.client.auth.currentUser;
+                  }));
+                }),
+                _buildMenuItem(Icons.lock_outline, 'Ganti Password', () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                  );
+                }),
               ]),
             
-            _buildMenuGroup(context, 'Data & Aplikasi', [
-              if (!isGuest) _buildMenuItem(Icons.download_outlined, 'Ekspor Semua Riwayat (CSV)', () {}),
+            _buildMenuGroup(context, 'Aplikasi', [
               _buildMenuItem(Icons.info_outline, 'Tentang CQIS', () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('CQIS - Coffee Quality Inspection System v1.0')),
                 );
               }),
-              _buildMenuItem(Icons.help_outline, 'Panduan SNI 01-2907-2008', () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Panduan SNI 01-2907-2008')),
-                );
+              _buildMenuItem(Icons.help_outline, 'Panduan SNI 01-2907-2008', () async {
+                final Uri url = Uri.parse('https://www.cctcid.com/wp-content/uploads/2018/08/SNI_2907-2008_Biji_Kopi-1.pdf');
+                if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tidak dapat membuka tautan panduan.')),
+                    );
+                  }
+                }
               }),
             ]),
 

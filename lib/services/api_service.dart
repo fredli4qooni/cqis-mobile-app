@@ -34,7 +34,7 @@ class ApiService {
 
 
 
-  final String baseUrl = 'http://10.166.11.249:5000';
+  final String baseUrl = 'http://10.77.84.249:5000';
 
   Future<void> loadModel() async {
 
@@ -73,9 +73,12 @@ class ApiService {
             }
           }
 
+          String rawLabel = det['label'].toString().toLowerCase().trim();
+          String finalLabel = (rawLabel == 'coklat' || rawLabel == 'cokelat') ? 'normal' : det['label'];
+
           results.add(DetectionResult(
             classIndex: det['class_index'],
-            label: det['label'],
+            label: finalLabel,
             confidence: (det['confidence'] as num).toDouble(),
             boundingBox: rect,
             sizeCategory: '',

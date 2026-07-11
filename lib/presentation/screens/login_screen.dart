@@ -85,7 +85,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _handleGuestLogin() async {
     setState(() => _isLoading = true);
     
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (_) {
+      // Ignore errors if sign out fails (e.g. no active session)
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 500));
     
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -106,8 +112,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-              const Center(
-                child: Icon(Icons.coffee_rounded, size: 60, color: AppColors.primary),
+              Center(
+                child: Image.asset('assets/images/cqis-logo.png', width: 60, height: 60),
               ),
               const SizedBox(height: 24),
               Text(

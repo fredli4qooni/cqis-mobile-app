@@ -46,7 +46,7 @@ class HomeScreen extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         title: Row(
           children: [
-            const Icon(Icons.coffee_rounded, color: AppColors.white),
+            Image.asset('assets/images/cqis-logo.png', width: 24, height: 24),
             const SizedBox(width: 8),
             Text(
               'CQIS',
@@ -175,8 +175,6 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const CoffeePriceChart(),
             const SizedBox(height: 32),
             
             // Alat Profesional Section
@@ -263,7 +261,7 @@ class HomeScreen extends ConsumerWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => GradeResultScreen(scanRecord: scan),
+                              builder: (context) => GradeResultScreen(scanRecords: [scan]),
                             ),
                           );
                         },
