@@ -15,8 +15,14 @@ class SniCalculator {
     'hitam_pecah': 'D03',
     'gelondong': 'D04',
     'coklat': 'D05',
-    'kulit_tanduk': 'D06',
-    'kulit_kopi': 'D07',
+    'kulit_tanduk': 'D06_S', // Fallback lama
+    'kulit_tanduk_besar': 'D06_B',
+    'kulit_tanduk_sedang': 'D06_S',
+    'kulit_tanduk_kecil': 'D06_K',
+    'kulit_kopi': 'D07_S', // Fallback lama
+    'kulit_kopi_besar': 'D07_B',
+    'kulit_kopi_sedang': 'D07_S',
+    'kulit_kopi_kecil': 'D07_K',
     'biji_pecah': 'D08',
     'pecah': 'D08',
     'muda': 'D09',
@@ -25,10 +31,13 @@ class SniCalculator {
     'berlubang_banyak': 'D11',
     'lubang_lebih_dari_satu': 'D11',
     'berkulit_tanduk': 'D12',
-    'benda_lain': 'D13',
-    'ranting': 'D13',
-    'tanah': 'D13',
-    'batu': 'D13',
+    'benda_lain': 'D13_S', // Fallback lama
+    'benda_lain_besar': 'D13_B',
+    'benda_lain_sedang': 'D13_S',
+    'benda_lain_kecil': 'D13_K',
+    'ranting': 'D13_S',
+    'tanah': 'D13_S',
+    'batu': 'D13_S',
   };
 
   static String getLabelName(String label, List<DefectDictionary> dictionary) {

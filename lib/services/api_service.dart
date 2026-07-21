@@ -32,9 +32,7 @@ class InferenceOutput {
 
 class ApiService {
 
-
-
-  final String baseUrl = 'http://10.77.84.249:5000';
+  final String baseUrl = 'http://202.134.242.63:5000';
 
   Future<void> loadModel() async {
 
@@ -86,8 +84,6 @@ class ApiService {
           ));
         }
 
-        _calculateSizeCategories(results);
-
         return InferenceOutput(results, imageWidth, imageHeight);
       } else {
         throw Exception("Server Error: ${response.body}");
@@ -101,38 +97,5 @@ class ApiService {
 
   }
 
-  void _calculateSizeCategories(List<DetectionResult> results) {
-    final double baselineBendaLain = 5000.0;
-    final double baselineKulitKopi = 4500.0;
-    final double baselineKulitTanduk = 4000.0;
 
-    for (int i = 0; i < results.length; i++) {
-      var result = results[i];
-      String label = result.label;
-      double area = result.boundingBox.width * result.boundingBox.height;
-      String sizeCat = '';
-
-      if (label == 'benda_lain' || label == 'kulit_kopi' || label == 'kulit_tanduk') {
-        double baseline = label == 'benda_lain' ? baselineBendaLain :
-                          label == 'kulit_kopi' ? baselineKulitKopi : baselineKulitTanduk;
-
-        if (area >= baseline * 2.5) {
-          sizeCat = 'besar';
-        } else if (area >= baseline * 1.5) {
-          sizeCat = 'sedang';
-        } else {
-          sizeCat = 'kecil';
-        }
-
-        results[i] = DetectionResult(
-          classIndex: result.classIndex,
-          label: result.label,
-          confidence: result.confidence,
-          boundingBox: result.boundingBox,
-          sizeCategory: sizeCat,
-          polygon: result.polygon,
-        );
-      }
-    }
-  }
 }

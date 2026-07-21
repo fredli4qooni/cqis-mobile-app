@@ -249,15 +249,7 @@ class _DefectDetailSheet extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
             const SizedBox(height: 16),
-            
-            _buildSection(
-              context,
-              title: 'Toleransi',
-              icon: Icons.info_outline,
-              content: defect.tolerance.isNotEmpty ? defect.tolerance : 'Tidak ada toleransi khusus',
-              color: AppColors.primary,
-            ),
-            const SizedBox(height: 32),
+
             
             SizedBox(
               width: double.infinity,

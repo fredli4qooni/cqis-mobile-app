@@ -58,12 +58,7 @@ class PdfService {
         ),
         pw.SizedBox(height: 16),
         pw.Divider(thickness: 2, color: PdfColors.brown800),
-        pw.SizedBox(height: 16),
-        pw.Text(
-          'SERTIFIKAT MUTU KOPI (SNI 01-2907-2008)',
-          style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-          textAlign: pw.TextAlign.center,
-        ),
+
       ],
     );
   }

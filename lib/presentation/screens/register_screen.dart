@@ -55,6 +55,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     
+    final email = _emailController.text.trim();
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Format email tidak valid!')),
+      );
+      return;
+    }
+    
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Password dan Konfirmasi Password tidak cocok!')),
@@ -66,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final AuthResponse res = await Supabase.instance.client.auth.signUp(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
         data: {
           'full_name': _nameController.text.trim(),

@@ -171,7 +171,7 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Text('Nilai Cacat: ${item.defectScore.toStringAsFixed(1)}', style: Theme.of(context).textTheme.bodyMedium),
+                                        Text('Nilai Cacat: ${item.defectScore.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
                                         if (batch.length > 1) ...[
                                           const SizedBox(width: 8),
                                           Container(

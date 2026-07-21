@@ -51,11 +51,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    final email = _emailController.text.trim();
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Format email tidak valid!')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
       final res = await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
       );
 

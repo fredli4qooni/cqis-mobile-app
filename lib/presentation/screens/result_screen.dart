@@ -278,7 +278,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '$_totalBeansAllImages Biji Kopi',
+                      '$_totalBeansAllImages Objek Terdeteksi',
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 14,

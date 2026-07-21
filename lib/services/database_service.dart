@@ -9,9 +9,8 @@ class DefectDictionary {
   final String name;
   final String category;
   final double penaltyScore;
-  final String tolerance;
 
-  DefectDictionary({required this.code, required this.name, required this.category, required this.penaltyScore, this.tolerance = ''});
+  DefectDictionary({required this.code, required this.name, required this.category, required this.penaltyScore});
 
   factory DefectDictionary.fromMap(Map<String, dynamic> map) {
     return DefectDictionary(
@@ -19,7 +18,6 @@ class DefectDictionary {
       name: map['name'] ?? '',
       category: map['category'] ?? 'Minor',
       penaltyScore: map['penalty_score']?.toDouble() ?? 0.0,
-      tolerance: map['tolerance'] ?? '',
     );
   }
 }

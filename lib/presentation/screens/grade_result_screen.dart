@@ -174,7 +174,7 @@ class _GradeResultScreenState extends ConsumerState<GradeResultScreen> {
             const SizedBox(height: 16),
 
             Text(
-              'Total Nilai Cacat: ${scanRecord.defectScore.toStringAsFixed(1)} / Batas Mutu: ${_getMaxScoreForGrade(scanRecord.grade).toStringAsFixed(0)}',
+              'Total Nilai Cacat: ${scanRecord.defectScore.toStringAsFixed(2)} / Batas Mutu: ${_getMaxScoreForGrade(scanRecord.grade).toStringAsFixed(0)}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 32),
@@ -192,7 +192,7 @@ class _GradeResultScreenState extends ConsumerState<GradeResultScreen> {
                     ),
                   ),
                   Text(
-                    scanRecord.defectScore.toStringAsFixed(1),
+                    scanRecord.defectScore.toStringAsFixed(2),
                     style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary)
                   ),
                 ],
@@ -228,7 +228,7 @@ class _GradeResultScreenState extends ConsumerState<GradeResultScreen> {
                     children: [
                       Padding(padding: const EdgeInsets.all(8.0), child: Text(SniCalculator.getLabelName(defect.key, DatabaseService.cachedDictionary))),
                       Padding(padding: const EdgeInsets.all(8.0), child: Text('${defect.value}', textAlign: TextAlign.center)),
-                      Padding(padding: const EdgeInsets.all(8.0), child: Text(totalValue.toStringAsFixed(1), textAlign: TextAlign.center)),
+                      Padding(padding: const EdgeInsets.all(8.0), child: Text(totalValue.toStringAsFixed(2), textAlign: TextAlign.center)),
                     ],
                   );
                 }),
